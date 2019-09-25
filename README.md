@@ -1,7 +1,7 @@
 # ns-inf-from-eos
 Code for inference of neutron star properties from EoS posterior samples.
 
-Dependencies: ns-struc (https://github.com/landryp/ns-struc), phenom-eos (https://github.com/landryp/phenom-eos)
+Dependencies: [ns-struc](https://github.com/landryp/ns-struc), [phenom-eos](https://github.com/landryp/phenom-eos)
 
 ---
 
@@ -21,11 +21,11 @@ inferspin nsname path/to/macro/props/dir/ path/to/m/prior/samples.csv path/to/f/
 
 inferchieff nsname path/to/macro/props/dir/ path/to/m1/prior/samples.csv path/to/m2/prior/samples.csv path/to/f1/prior/samples.csv path/to/f2/prior/samples.csv path/to/costheta1/prior/samples.csv path/to/costheta2/prior/samples.csv -v -n nummcsamps -o path/to/output/dir/
 
-### Infer tidal deformability, radius and compactness
+##### Infer tidal deformability, radius and compactness
 
 inferradius nsname path/to/macro/props/dir/ path/to/m/prior/samples.csv -v -n nummcsamps -o path/to/output/dir/
 
-### Calculate confidence intervals
+##### Calculate confidence intervals
 
 calcintervals postsamps.csv -v -p I,chi -L conflvl -d path/to/post/samples/dir/ -o path/to/output/dir/
 
@@ -45,7 +45,7 @@ plotcorner priorsamps.csv,postsamps.csv -x var1,var2,... -l x1min,x1max,x2min,x2
 
 ### Instructions for performing inference
 
-Take LVC's GW170817 spectral EoS posterior samples (https://dcc.ligo.org/public/0152/P1800115/012/Parametrized-EoS_maxmass_EoS_samples.dat) as input.
+Take LVC's GW170817 spectral EoS posterior [samples](https://dcc.ligo.org/public/0152/P1800115/012/Parametrized-EoS_maxmass_EoS_samples.dat) as input.
 
 ##### Generate spectral EoSs from samples
 

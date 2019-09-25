@@ -1,0 +1,27 @@
+#!/usr/bin/python
+__doc__ = 'GETSPINATMERGER -- extrapolate pulsar spin to binary merger given spin-down parameters, assuming constant magnetic field'
+__usage__ = 'getspinatmerger spin Tc tau [-v]'
+__author__ = 'philippe.landry@ligo.org'
+__date__ = '09-2019'
+
+import numpy as np
+from optparse import OptionParser
+
+parser = OptionParser(usage=__usage__, description=__doc__)
+parser.add_option('-v', '--verbose', action='store_true', default=False, help='toggle verbose output, DEFAULT=False', metavar='False')
+
+opts, args = parser.parse_args()
+spin_i = float(args[0])
+T_merge = float(args[1])
+age = float(args[2])
+verb = opts.verbose
+
+# CALCULATE SPIN AT MERGER, ASSUMING ROTATION-POWERED PULSAR AND CONSTANT MAGNETIC FIELD (SEE E.G. ZHU+ 2018)
+
+if verb: print 'Calculating spin at merger given current spin {0}, time to coalescence of {1}, and characteristic age {2}'.format(spin_i,T_merge,age)
+
+spin_f = spin_i/np.sqrt(1.+T_merge/age)
+
+if verb: print 'Spin at merger found as:'
+
+print spin_f

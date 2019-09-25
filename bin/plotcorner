@@ -1,0 +1,125 @@
+#!/usr/bin/python
+__doc__ = 'PLOTCORNER -- make corner plot from csv files file1.csv, file2.csv, ... '
+__usage__ = 'plotcorner file1.csv,file2.csv,... [-x COLUMN_NAME1,COLUMN_NAME2,...] [-l X1MIN,X1MAX,X2MIN,X2MAX,...] [-d PATH/TO/FILE_LIST] [-o PATH/TO/FILE_DIR]'
+__author__ = 'philippe.landry@ligo.org'
+__date__ = '07-2019'
+
+import numpy as np
+from optparse import OptionParser
+from nsstruc.pltsetup import *
+from matplotlib.lines import Line2D
+from corner import corner, quantile
+from nsurinf.statistics import *
+
+parser = OptionParser(usage=__usage__, description=__doc__)
+parser.add_option('-x', '--xcol', default=False, help='which column to plot on x-axis, DEFAULT=FIRST_COLUMN', metavar='COLUMN_NAME')
+parser.add_option('-l', '--lims', default=False, help='x and y ranges for plot, DEFAULT=AUTO', metavar='XMIN,XMAX,YMIN,YMAX')
+parser.add_option('-A', '--axislabels', default=False, help='axis labels, DEFAULT=NONE', metavar='X1LABEL,X2LABEL,...')
+parser.add_option('-L', '--logaxis', default='False,False', help='whether x and y axes should be log-scaled, DEFAULT=False,False', metavar='XBOOL,YBOOL')
+parser.add_option('-k', '--key', action='store_false', default=True, help='toggle legend/key display, DEFAULT=True', metavar='BOOL')
+parser.add_option('-a', '--alpha', default=1., help='transparency of plotted curves, DEFAULT=1.', metavar='ALPHA')
+parser.add_option('-d', '--dir', default='./', help='input directory path, DEFAULT="./"', metavar='PATH/TO/DIR/')
+parser.add_option('-o', '--outdir', default='./', help='output directory path, DEFAULT="./"', metavar='PATH/TO/DIR')
+parser.add_option('-f', '--outfile', default='hist', help='plot basename for save, DEFAULT="hist"', metavar='PLOTNAME')
+parser.add_option('-t', '--tag', default='', help='tag to append to plot basename, DEFAULT=NONE', metavar='-TAG')
+parser.add_option('-C', '--conflvl', default=False, help='confidence level contour to plot, DEFAULT=NONE', metavar='CONFLVL1,CONFLVL2,...')
+parser.add_option('-c', '--cutoff', default=False, help='cutoff data at line number, DEFAULT=NONE', metavar='LINE_NUM')
+parser.add_option('-b', '--numbins', default=10, help='number of histogram bins to use, DEFAULT=10', metavar='NUM_BINS')
+parser.add_option('-O', '--overlay', default=False, help='overlay vertical lines, DEFAULT=False', metavar='XVAL1+XVAL2,XVAL3,...')
+parser.add_option('-s', '--overstyles', default=None, help='style for overlaid vertical lines, DEFAULT=None', metavar='COLOR1+LS1+LBL1,COLOR2+LS2+LBL2,...')
+parser.add_option('-q', '--quantiles', default=False, help='quantiles to plot on 1D histograms, DEFAULT=None', metavar='Q1,Q2,...')
+parser.add_option('-T', '--truthvals', default=False, help='truth values to plot on histograms, DEFAULT=None', metavar='T1x+T1y,T2x+T2y,...')
+parser.add_option('-F', '--fillcolor', default=0, help='color selection from palette, DEFAULT=0', metavar='COLOR_NUM')
+
+opts, args = parser.parse_args()
+filenames = str(args[0]).split(',')
+xvar = opts.xcol
+if xvar: xvar=str(xvar)
+xvars = xvar.split(',')
+lims = opts.lims
+if lims:
+	lims = str(opts.lims).split(',')
+	lims = [(float(2*i),float(lims[2*i+1])) for i in range(len(lims)/2)]
+else: lims = None
+lbls = opts.axislabels
+if lbls: lbls = str(lbls).split(',')
+else: lbls = xvars
+logaxis = str(opts.logaxis).split(',')
+logaxis = [not logax == 'False' for logax in logaxis]
+key = opts.key
+alph = float(opts.alpha)
+indir = str(opts.dir)
+outdir = str(opts.outdir)
+pltname = str(opts.outfile)
+tag = str(opts.tag)
+cutoff = opts.cutoff
+if cutoff: lastline=int(cutoff)-1
+numbins = int(opts.numbins)
+overlay = opts.overlay
+if overlay:
+	lines = str(overlay).split(',')
+	overstyles = str(opts.overstyles)
+	styles = overstyles.split(',')
+conflvl = opts.conflvl
+if conflvl:
+	conflvl=str(conflvl)
+	lvls = conflvl.split(',')
+	lvls = [float(lvl) for lvl in lvls]
+else: lvls = [0.]
+quants = opts.quantiles
+if quants:
+	quants=str(quants)
+	qs = quants.split(',')
+	qs = [float(q) for q in qs]
+else: qs = [0.]
+truthvals = opts.truthvals
+if truthvals:
+	truthvals=str(truthvals)
+	trues = truthvals.split(',')
+else: trues = []
+fill = int(opts.fillcolor)
+
+# SET UP FIGURE
+
+fig = None
+
+# READ CSV DATA FROM EACH FILE
+j=0
+for fname in filenames:
+
+	shortname = (fname.split('/')[-1]).split('_')[0]
+	fpath = indir+fname
+	fdat = np.genfromtxt(fpath,names=True,delimiter=',')
+	
+	cols = [[datum for datum in fdat[col] if datum == datum] for col in xvars]
+
+	if j == len(filenames)-1:
+		fig = corner(np.transpose(cols),bins=numbins,levels=lvls,range=lims,labels=lbls,label_kwargs={"fontsize": 16,"family": "serif"},color=AUTO_COLORS[fill], quantiles=qs, fig=fig, hist_kwargs={'histtype': 'stepfilled','alpha': 0.5})
+		
+
+	else:
+		fig = corner(np.transpose(cols),bins=numbins,levels=lvls,range=lims,color=AUTO_COLORS[0],fig=fig)
+	
+	j = j+1
+
+axes = np.array(fig.axes).reshape((len(xvars),len(xvars)))
+
+for i in range(len(xvars)):
+	ax = axes[i,i]
+	quant = quantile(np.transpose(cols)[:,i],qs)
+	up = quant[2]-quant[1]
+	down = quant[1]-quant[0]
+	ax.set_title(str(lbls[i])+r'$ = {1:.3g}^{{+{2:.2g} }}_{{-{0:.2g} }}$'.format(down,quant[1],up),fontdict={"fontsize": 12,"family": "serif"})
+	for k in range(len(trues)):
+		ax.axvline(trues[k],color=AUTO_COLORS[j+k+1])
+		
+for ii in range(len(xvars)):
+	for jj in range(ii):
+		ax = axes[ii,jj]
+		for k in range(len(trues)):
+			ax.axvline(trues[k],color=AUTO_COLORS[j+k+1])
+			ax.axhline(trues[k],color=AUTO_COLORS[j+k+1])
+
+if key: plt.legend(('90%CL LB','median','90%CL UB','prior','post'),loc=(0.25,3.5),fontsize=10)	
+plt.savefig(outdir+pltname+tag+'.png')
+

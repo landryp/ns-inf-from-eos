@@ -1,0 +1,104 @@
+#!/usr/bin/python
+__doc__ = 'INFERSPIN -- use EoS posterior samples to infer dimensionless spin of target neutron star'
+__usage__ = 'inferspin nsname path/to/macro/dir/ path/to/m/prior/samples path/to/f/prior/samples [-v] [-n 1e4] [-o ./]'
+__author__ = 'philippe.landry@ligo.org'
+__date__ = '09-2019'
+
+import numpy as np
+from optparse import OptionParser
+from scipy.interpolate import interp1d
+from random import sample, choice
+import glob
+from nsinffromeos.constants import *
+
+parser = OptionParser(usage=__usage__, description=__doc__)
+parser.add_option('-n', '--numsamps', default=1e4, help='maximum number of samples to use for Monte-Carlo integration, DEFAULT=1e4', metavar='MAX_NUM_SAMPS')
+parser.add_option('-o', '--outdir', default='./', help='path to output directory, DEFAULT=./', metavar='PATH/TO/OUTDIR')
+parser.add_option('-v', '--verbose', action='store_true', default=False, help='toggle verbose output, DEFAULT=False', metavar='False')
+parser.add_option('-s', '--spincorr', action='store_true', default=False, help='toggle spin corrections to moment of inertia, DEFAULT=False')
+
+opts, args = parser.parse_args()
+nsname = str(args[0])
+eos_path = str(args[1])
+mprior_path = str(args[2])
+fprior_path = str(args[3])
+nsamps = int(float(opts.numsamps))
+outdir = str(opts.outdir)
+verb = opts.verbose
+spin_corr = opts.spincorr
+
+if spin_corr: dI_spin = eval('moicorr_B13')
+
+# LOAD PRIOR SAMPLES
+
+eoslist = glob.glob(eos_path+'/*.csv')
+IofMlist = []
+for eos in eoslist:
+	macro_dat = np.genfromtxt(eos,names=True,delimiter=',',dtype=None)
+	Mdat = macro_dat['M']
+	Idat = macro_dat['I']
+	IofM = interp1d(Mdat,Idat,kind='linear',bounds_error=False,fill_value=np.nan)
+	IofMlist.append(IofM)
+
+mprior = np.genfromtxt(mprior_path,names=True,delimiter=',',dtype=None)['m']
+fprior = np.genfromtxt(fprior_path,names=True,delimiter=',',dtype=None)['f']
+
+minlen = min(len(mprior),len(fprior))
+num = min(minlen,nsamps)
+
+eossamps = np.random.choice(np.array(eoslist),num)
+IofMsamps = [IofMlist[list(eoslist).index(eos)] for eos in eossamps]
+msamps = sample(mprior,num)
+fsamps = sample(fprior,num)
+
+if verb: print 'Loading EoSs from {0}, m prior samples from {1} and f prior samples from {2}'.format(str(eos_path),str(mprior_path),str(fprior_path))
+
+# IMPLEMENT COMPOSITE LIKELIHOOD FOR MOI AND SPIN AS A FUNCTION OF PRIOR VARIABLES
+
+def Iofm(m,IofM):
+
+	I = IofM(m)
+
+	return I
+	
+def spin(f,m,I):
+
+	chi = 2.*np.pi*f*c*I*1e45/(G*m**2*Msun**2)
+
+	return chi
+
+def chiofmf(m,IofM,f):
+
+	I = IofM(m)
+	chi = spin(f,m,I)
+
+	return chi
+
+# PERFORM INFERENCE
+
+if verb: print 'Inferring spin for {0}'.format(nsname)
+
+chipost = []
+Ipost = []
+for count in range(num):
+
+	IofM = IofMsamps[count]
+	m = msamps[count]
+	f = fsamps[count]			
+
+	I = Iofm(m,IofM)
+	if spin_corr:
+		I = I + dI_spin(m,f,I)
+	chi = spin(f,m,I)
+	Ipost.append(I)
+	chipost.append(chi)
+
+# SAVE POSTERIOR DATA
+
+post = zip(msamps,eossamps,fsamps,Ipost,chipost)
+outfile = outdir+nsname+"_spin.csv"
+
+if verb: print 'Saving spin posterior samples for {0} to {1}'.format(nsname,outfile)
+
+np.savetxt(outfile,post,fmt='%s',delimiter=',',header='m,EoS,f,I,chi',comments='')
+
