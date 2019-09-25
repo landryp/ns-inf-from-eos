@@ -1,7 +1,7 @@
 # ns-inf-from-eos
 Code for inference of neutron star properties from EoS posterior samples.
 
-_Dependencies: [ns-struc](https://github.com/landryp/ns-struc), [phenom-eos](https://github.com/landryp/phenom-eos)_
+*Dependencies: [ns-struc](https://github.com/landryp/ns-struc), [phenom-eos](https://github.com/landryp/phenom-eos)*
 
 ---
 
@@ -47,13 +47,15 @@ _Dependencies: [ns-struc](https://github.com/landryp/ns-struc), [phenom-eos](htt
 
 Take LVC's GW170817 spectral EoS posterior [samples](https://dcc.ligo.org/public/0152/P1800115/012/Parametrized-EoS_maxmass_EoS_samples.dat) as input.
 
-###### Generate spectral EoSs from samples
+###### Generate spectral EoSs from samples, plus priors on observables
 
 * makespec path/to/samples.csv path/to/output/dir/
 
 * addcrusts path/to/input/dir/ path/to/output/dir/
 
 * getnsprops $(find path/to/input/dir/*cr.csv -type f -printf "%f,") -p R,M,I,Lambda -d path/to/input/dir/ -o path/to/output/dir/
+
+* makepriorsamples varname distr param1,param2,... -v -n numsamps -o path/to/output/dir/
 
 ###### Infer spin for target pulsar
 
