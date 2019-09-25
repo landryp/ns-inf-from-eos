@@ -31,7 +31,7 @@ _Dependencies: [ns-struc](https://github.com/landryp/ns-struc), [phenom-eos](htt
 
 ---
 
-### Plotting tools
+### Tools
 
 ###### Make histogram of single observable
 
