@@ -27,15 +27,15 @@ verb = opts.verbose
 # LOAD PRIOR SAMPLES
 
 eoslist = glob.glob(eos_path+'/*.csv')
-#LofMlist = []
+LofMlist = []
 RofMlist = []
 for eos in eoslist:
 	macro_dat = np.genfromtxt(eos,names=True,delimiter=',',dtype=None)
 	Mdat = macro_dat['M']
-#	Ldat = macro_dat['Lambda']
+	Ldat = macro_dat['Lambda']
 	Rdat = macro_dat['R']
-#	LofM = interp1d(Mdat,Ldat,kind='linear',bounds_error=False,fill_value=np.nan)
-#	LofMlist.append(LofM)
+	LofM = interp1d(Mdat,Ldat,kind='linear',bounds_error=False,fill_value=np.nan)
+	LofMlist.append(LofM)
 	RofM = interp1d(Mdat,Rdat,kind='linear',bounds_error=False,fill_value=np.nan)
 	RofMlist.append(RofM)
 
@@ -45,7 +45,7 @@ minlen = len(mprior)
 num = min(minlen,nsamps)
 
 eossamps = np.random.choice(np.array(eoslist),num)
-#LofMsamps = [LofMlist[list(eoslist).index(eos)] for eos in eossamps]
+LofMsamps = [LofMlist[list(eoslist).index(eos)] for eos in eossamps]
 RofMsamps = [RofMlist[list(eoslist).index(eos)] for eos in eossamps]
 msamps = sample(mprior,num)
 
@@ -67,7 +67,7 @@ def Rofm(m,RofM):
 	
 def compact(m,R):
 
-	C = G*m*Msun/(c**2*R)
+	C = G*m*Msun/(c**2*R*1e5)
 
 	return C
 
@@ -87,24 +87,22 @@ Cpost = []
 Rpost = []
 for count in range(num):
 
-#	LofM = LofMsamps[count]
+	LofM = LofMsamps[count]
 	RofM = RofMsamps[count]
 	m = msamps[count]			
 
-#	L = Lofm(m,LofM)
+	L = Lofm(m,LofM)
 	R = Rofm(m,RofM)
 	C = compact(m,R)
-#	Lpost.append(L)
+	Lpost.append(L)
 	Cpost.append(C)
 	Rpost.append(R)
 
 # SAVE POSTERIOR DATA
 
-#post = zip(msamps,eossamps,Lpost,Cpost,Rpost)
-post = zip(msamps,eossamps,Cpost,Rpost)
+post = zip(msamps,eossamps,Lpost,Cpost,Rpost)
 outfile = outdir+nsname+"_radius.csv"
 
 if verb: print 'Saving radius posterior samples for {0} to {1}'.format(nsname,outfile)
 
-#np.savetxt(outfile,post,fmt='%s',delimiter=',',header='m,EoS,Lambda,C,R',comments='')
-np.savetxt(outfile,post,fmt='%s',delimiter=',',header='m,EoS,C,R',comments='')
+np.savetxt(outfile,post,fmt='%s',delimiter=',',header='m,EoS,Lambda,C,R',comments='')
