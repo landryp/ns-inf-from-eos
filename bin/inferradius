@@ -7,7 +7,8 @@ __date__ = '09-2019'
 import numpy as np
 from optparse import OptionParser
 from scipy.interpolate import interp1d
-from random import sample, choice
+from random import sample
+from numpy.random import choice
 import glob
 from nsinffromeos.constants import *
 
@@ -44,10 +45,14 @@ mprior = np.genfromtxt(mprior_path,names=True,delimiter=',',dtype=None)['m']
 minlen = len(mprior)
 num = min(minlen,nsamps)
 
+if num != nsamps:
+	print 'Infsufficient number of prior samples available; sampling with replacement'
+	num = nsamps
+
 eossamps = np.random.choice(np.array(eoslist),num)
 LofMsamps = [LofMlist[list(eoslist).index(eos)] for eos in eossamps]
 RofMsamps = [RofMlist[list(eoslist).index(eos)] for eos in eossamps]
-msamps = sample(mprior,num)
+msamps = choice(mprior,size=num)
 
 if verb: print 'Loading EoSs from {0} and m prior samples from {1}'.format(str(eos_path),str(mprior_path))
 

@@ -106,7 +106,7 @@ def hpd_sample(dat,cl):
 	dat = [datum for datum in dat if datum == datum]
 	norm = len(dat)
 	dat = np.array(dat)
-	hist, bin_edges = np.histogram(dat,bins='auto')
+	hist, bin_edges = np.histogram(dat,bins='sqrt')
 	bins = [(bin_edges[i],bin_edges[i+1]) for i in range(len(bin_edges)-1)]
 	hist_dat = zip(hist,bins)
 	hist_dat.sort(reverse=True)

@@ -7,7 +7,8 @@ __date__ = '09-2019'
 import numpy as np
 from optparse import OptionParser
 from scipy.interpolate import interp1d
-from random import sample, choice
+from random import sample
+from numpy.random import choice
 import glob
 from nsinffromeos.constants import *
 
@@ -54,14 +55,19 @@ costheta2prior = np.genfromtxt(costheta2prior_path,names=True,delimiter=',',dtyp
 minlen = min(len(m1prior),len(m2prior),len(f1prior),len(f2prior),len(costheta1prior),len(costheta2prior))
 num = min(minlen,nsamps)
 
-eossamps = np.random.choice(np.array(eoslist),num)
+if num != nsamps:
+	print 'Infsufficient number of prior samples available; sampling with replacement'
+	num = nsamps
+
+eossamps = choice(np.array(eoslist),size=num)
 IofMsamps = [IofMlist[list(eoslist).index(eos)] for eos in eossamps]
-m1samps = sample(m1prior,num)
-m2samps = sample(m2prior,num)
-f1samps = sample(f1prior,num)
-f2samps = sample(f2prior,num)
-costheta1samps = sample(costheta1prior,num)
-costheta2samps = sample(costheta2prior,num)
+m_index = choice(range(min(len(m1prior),len(m2prior))),size=num)
+m1samps = [m1prior[index] for index in m_index]
+m2samps = [m2prior[index] for index in m_index]
+f1samps = choice(f1prior,size=num)
+f2samps = choice(f2prior,size=num)
+costheta1samps = choice(costheta1prior,size=num)
+costheta2samps = choice(costheta2prior,size=num)
 
 if verb: print 'Loading EoSs from {0}, m prior samples from {1} & {2}, f prior samples from {3} & {4} and costheta prior samples from {5} & {6}'.format(str(eos_path),str(m1prior_path),str(m2prior_path),str(f1prior_path),str(f2prior_path),str(costheta1prior_path),str(costheta2prior_path))
 
@@ -111,6 +117,7 @@ chi1post = []
 chi2post = []
 I1post = []
 I2post = []
+qsamps = []
 for count in range(num):
 
 	IofM = IofMsamps[count]
@@ -119,7 +126,10 @@ for count in range(num):
 	f1 = f1samps[count]
 	f2 = f2samps[count]
 	costheta1 = costheta1samps[count]
-	costheta2 = costheta2samps[count]			
+	costheta2 = costheta2samps[count]
+	
+	q = min(m1,m2)/max(m1,m2)
+	qsamps.append(q)			
 
 	I1 = Iofm(m1,IofM)
 	I2 = Iofm(m2,IofM)
@@ -137,10 +147,10 @@ for count in range(num):
 
 # SAVE POSTERIOR DATA
 
-post = zip(m1samps,m2samps,eossamps,f1samps,f2samps,costheta1samps,costheta2samps,I1post,I2post,chi1post,chi2post,chieffpost)
+post = zip(m1samps,m2samps,qsamps,eossamps,f1samps,f2samps,costheta1samps,costheta2samps,I1post,I2post,chi1post,chi2post,chieffpost)
 outfile = outdir+nsname+"_chieff.csv"
 
 if verb: print 'Saving effective spin posterior samples for {0} to {1}'.format(nsname,outfile)
 
-np.savetxt(outfile,post,fmt='%s',delimiter=',',header='m1,m2,EoS,f1,f2,costheta1,costheta2,I1,I2,chi1,chi2,chieff',comments='')
+np.savetxt(outfile,post,fmt='%s',delimiter=',',header='m1,m2,q,EoS,f1,f2,costheta1,costheta2,I1,I2,chi1,chi2,chieff',comments='')
 

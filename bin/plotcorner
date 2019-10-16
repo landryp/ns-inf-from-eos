@@ -39,7 +39,7 @@ xvars = xvar.split(',')
 lims = opts.lims
 if lims:
 	lims = str(opts.lims).split(',')
-	lims = [(float(2*i),float(lims[2*i+1])) for i in range(len(lims)/2)]
+	lims = [(float(lims[2*i]),float(lims[2*i+1])) for i in range(len(lims)/2)]
 else: lims = None
 lbls = opts.axislabels
 if lbls: lbls = str(lbls).split(',')
@@ -94,11 +94,11 @@ for fname in filenames:
 	cols = [[datum for datum in fdat[col] if datum == datum] for col in xvars]
 
 	if j == len(filenames)-1:
-		fig = corner(np.transpose(cols),bins=numbins,levels=lvls,range=lims,labels=lbls,label_kwargs={"fontsize": 16,"family": "serif"},color=AUTO_COLORS[fill], quantiles=qs, fig=fig, hist_kwargs={'histtype': 'stepfilled','alpha': 0.5})
+		fig = corner(np.transpose(cols),bins=numbins,levels=lvls,range=lims,labels=lbls,label_kwargs={"fontsize": 16,"family": "serif"},color=AUTO_COLORS[fill], quantiles=qs, fig=fig, hist_kwargs={'histtype': 'stepfilled','alpha': 0.5,'normed': True})
 		
 
 	else:
-		fig = corner(np.transpose(cols),bins=numbins,levels=lvls,range=lims,color=AUTO_COLORS[0],fig=fig)
+		fig = corner(np.transpose(cols),bins=numbins,levels=lvls,range=lims,color=AUTO_COLORS[0],fig=fig, hist_kwargs={'normed': True})
 	
 	j = j+1
 

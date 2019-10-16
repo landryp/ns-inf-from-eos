@@ -45,7 +45,7 @@ Code for inference of neutron star properties from EoS posterior samples.
 
 ### Instructions for performing inference
 
-Take LVC's GW170817 spectral EoS posterior [samples](https://dcc.ligo.org/public/0152/P1800115/012/Parametrized-EoS_maxmass_EoS_samples.dat) as input.
+Take LVC's GW170817 spectral EoS posterior [samples](https://dcc.ligo.org/public/0152/P1800115/012/Parametrized-EoS_maxmass_EoS_samples.dat) as input. Spectral EoS prior drawn from uniform distribution g0 in [0.2,2.], g1 in [-1.6,1.7], g2 in [-0.6,0.6], g3 in [-0.02,0.02] with adiabatic index in [0.6,4.5].
 
 ###### Generate spectral EoSs from samples, plus priors on observables
 
@@ -69,7 +69,7 @@ Take LVC's GW170817 spectral EoS posterior [samples](https://dcc.ligo.org/public
 
 * inferchieff nsname path/to/macro/dir/ path/to/m1/prior/samples path/to/m2/prior/samples path/to/f1/prior/samples path/to/f2/prior/samples path/to/costheta1/prior/samples path/to/costheta2/prior/samples -o path/to/output/dir/
 
-* plotcorner path/to/post.csv -x chi1,chi2,chieff -o path/to/output/dir/ -b numbins -t _chieff
+* plotcorner path/to/prior.csv,path/to/post.csv -x I1,chi1,chieff -o path/to/output/dir/ -b 40 -t _chieff -q 0.05,0.5,0.95 -F 7 -A '$I_1$','$\chi_1$','$\chi_{\rm eff}$' -C 0.5,0.9 -f corner
 
-* calcintervals nsname_chieff.csv -v -p I,chi,chieff -L conflvl -d path/to/post.csv -o path/to/output/dir
+* calcintervals nsname_chieff.csv -v -p q,I1,I2,chi1,chi2,chieff -L conflvl -d path/to/post.csv -o path/to/output/dir
 
